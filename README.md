@@ -4,7 +4,6 @@ http://freeopcua.github.io/, https://github.com/FreeOpcUa/opcua-asyncio
 
 [![Build Status](https://travis-ci.org/FreeOpcUa/opcua-asyncio.svg?branch=master)](https://travis-ci.org/FreeOpcUa/opcua-asyncio)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-asyncio/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-asyncio/?branch=master)
-<<<<<<< HEAD
 [![Code Coverage](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-asyncio/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-asyncio/?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/grade/f7f9a138ee7c4541b3b794b86e61e929)](https://www.codacy.com/app/olivier-roulet/opcua-asyncio)
 [![Code Climate](https://codeclimate.com/github/FreeOpcUa/opcua-asyncio/badges/gpa.svg)](https://codeclimate.com/github/FreeOpcUa/opcua-asyncio)
