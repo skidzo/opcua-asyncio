@@ -1,9 +1,9 @@
 import asyncio
 import logging
-from opcua import ua, Server, EventGenerator
+from asyncua import ua, Server, EventGenerator
 
 logging.basicConfig(level=logging.INFO)
-_logger = logging.getLogger('opcua')
+_logger = logging.getLogger('asyncua')
 
 
 async def start_server(loop: asyncio.AbstractEventLoop):
@@ -49,8 +49,11 @@ def main():
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
     loop.create_task(start_server(loop))
-    loop.run_forever()
-    loop.close()
+    try:
+        loop.run_forever()
+    finally:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
 
 
 if __name__ == "__main__":

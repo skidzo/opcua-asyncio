@@ -1,27 +1,20 @@
 from setuptools import setup, find_packages
 
-import sys
-
-install_requires = ["python-dateutil", "pytz", "lxml"]
-if sys.version_info[0] < 3:
-    install_requires.extend(["enum34", "trollius", "futures"])
-
-setup(name="opcua",
-      version="0.95.3",
+setup(name="asyncua",
+      version="0.5.0",
       description="Pure Python OPC-UA client and server library",
       author="Olivier Roulet-Dubonnet",
       author_email="olivier.roulet@gmail.com",
       url='http://freeopcua.github.io/',
       packages=find_packages(),
-      provides=["opcua"],
+      provides=["asyncua"],
       license="GNU Lesser General Public License v3 or later",
-      install_requires=install_requires,
+      install_requires=["aiofiles", "asyncio-contextmanager", "python-dateutil", "pytz", "lxml"],
       extras_require={
           'encryption': ['cryptography']
       },
-      classifiers=["Programming Language :: Python",
-                   "Programming Language :: Python :: 3",
-                   "Programming Language :: Python :: 2",
+      classifiers=["Programming Language :: Python :: 3.6",
+                   "Programming Language :: Python :: 3.7",
                    "Development Status :: 4 - Beta",
                    "Intended Audience :: Developers",
                    "Operating System :: OS Independent",
@@ -30,16 +23,16 @@ setup(name="opcua",
                    ],
       entry_points={'console_scripts':
                     [
-                        'uaread = opcua.tools:uaread',
-                        'uals = opcua.tools:uals',
-                        'uabrowse = opcua.tools:uals',
-                        'uawrite = opcua.tools:uawrite',
-                        'uasubscribe = opcua.tools:uasubscribe',
-                        'uahistoryread = opcua.tools:uahistoryread',
-                        'uaclient = opcua.tools:uaclient',
-                        'uaserver = opcua.tools:uaserver',
-                        'uadiscover = opcua.tools:uadiscover',
-                        'uacall = opcua.tools:uacall',
+                        'uaread = asyncua.tools:uaread',
+                        'uals = asyncua.tools:uals',
+                        'uabrowse = asyncua.tools:uals',
+                        'uawrite = asyncua.tools:uawrite',
+                        'uasubscribe = asyncua.tools:uasubscribe',
+                        'uahistoryread = asyncua.tools:uahistoryread',
+                        'uaclient = asyncua.tools:uaclient',
+                        'uaserver = asyncua.tools:uaserver',
+                        'uadiscover = asyncua.tools:uadiscover',
+                        'uacall = asyncua.tools:uacall',
                     ]
                     }
       )

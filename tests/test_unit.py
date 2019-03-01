@@ -3,25 +3,29 @@
 """
 Simple unit test that do not need to setup a server or a client
 """
-import logging
-import io
-from datetime import datetime
-import pytest
-import uuid
 
-from opcua import ua
-from opcua.ua.ua_binary import extensionobject_from_binary
-from opcua.ua.ua_binary import extensionobject_to_binary
-from opcua.ua.ua_binary import nodeid_to_binary, variant_to_binary, _reshape, variant_from_binary, nodeid_from_binary
-from opcua.ua.ua_binary import struct_to_binary, struct_from_binary
-from opcua.ua import flatten, get_shape
-from opcua.server.internal_subscription import WhereClauseEvaluator
-from opcua.common.event_objects import BaseEvent
-from opcua.common.ua_utils import string_to_variant, variant_to_string, string_to_val, val_to_string
-from opcua.common.xmlimporter import XmlImporter
-from opcua.ua.uatypes import _MaskEnum
-from opcua.common.structures import StructGenerator
-from opcua.common.connection import MessageChunk
+import io
+import os
+import uuid
+import pytest
+import logging
+from datetime import datetime
+
+from asyncua import ua
+from asyncua.ua.ua_binary import extensionobject_from_binary
+from asyncua.ua.ua_binary import extensionobject_to_binary
+from asyncua.ua.ua_binary import nodeid_to_binary, variant_to_binary, _reshape, variant_from_binary, nodeid_from_binary
+from asyncua.ua.ua_binary import struct_to_binary, struct_from_binary
+from asyncua.ua import flatten, get_shape
+from asyncua.server.internal_subscription import WhereClauseEvaluator
+from asyncua.common.event_objects import BaseEvent
+from asyncua.common.ua_utils import string_to_variant, variant_to_string, string_to_val, val_to_string
+from asyncua.common.xmlimporter import XmlImporter
+from asyncua.ua.uatypes import _MaskEnum
+from asyncua.common.structures import StructGenerator
+from asyncua.common.connection import MessageChunk
+
+EXAMPLE_BSD_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "example.bsd"))
 
 
 def test_variant_array_none():
@@ -46,30 +50,21 @@ def test_variant_empty_list():
     assert v2.is_array
 
 
-def test_structs_save_and_import():
-    xmlpath = "tests/example.bsd"
+def test_custom_structs(tmpdir):
     c = StructGenerator()
-    c.make_model_from_file(xmlpath)
-    struct_dict = c.save_and_import("structures.py")
-    for k, v in struct_dict.items():
-        a = v()
-        assert k == a.__class__.__name__
-
-
-def test_custom_structs():
-    xmlpath = "tests/example.bsd"
-    c = StructGenerator()
-    c.make_model_from_file(xmlpath)
-    c.save_to_file("tests/structures.py")
-    import structures as s
-
+    c.make_model_from_file(EXAMPLE_BSD_PATH)
+    output_path = tmpdir.join("test_custom_structs.py").strpath
+    c.save_to_file(output_path)
+    ns = {}
+    with open(output_path) as s:
+        exec(s.read(), ns)
     # test with default values
-    v = s.ScalarValueDataType()
+    v = ns["ScalarValueDataType"]()
     data = struct_to_binary(v)
-    v2 = struct_from_binary(s.ScalarValueDataType, ua.utils.Buffer(data))
+    v2 = struct_from_binary(ns["ScalarValueDataType"], ua.utils.Buffer(data))
 
     # set some values
-    v = s.ScalarValueDataType()
+    v = ns["ScalarValueDataType"]()
     v.SbyteValue = 1
     v.ByteValue = 2
     v.Int16Value = 3
@@ -98,24 +93,26 @@ def test_custom_structs():
     # self.UInteger =
 
     data = struct_to_binary(v)
-    v2 = struct_from_binary(s.ScalarValueDataType, ua.utils.Buffer(data))
+    v2 = struct_from_binary(ns["ScalarValueDataType"], ua.utils.Buffer(data))
     assert v.NodeIdValue == v2.NodeIdValue
 
 
-def test_custom_structs_array():
-    xmlpath = "tests/example.bsd"
+def test_custom_structs_array(tmpdir):
     c = StructGenerator()
-    c.make_model_from_file(xmlpath)
-    c.save_to_file("tests/structures.py")
-    import structures as s
+    c.make_model_from_file(EXAMPLE_BSD_PATH)
+    ns = {}
+    output_path = tmpdir.join("test_custom_structs_array.py").strpath
+    c.save_to_file(output_path)
+    with open(output_path) as s:
+        exec(s.read(), ns)
 
     # test with default values
-    v = s.ArrayValueDataType()
+    v = ns["ArrayValueDataType"]()
     data = struct_to_binary(v)
-    v2 = struct_from_binary(s.ArrayValueDataType, ua.utils.Buffer(data))
+    v2 = struct_from_binary(ns["ArrayValueDataType"], ua.utils.Buffer(data))
 
     # set some values
-    v = s.ArrayValueDataType()
+    v = ns["ArrayValueDataType"]()
     v.SbyteValue = [1]
     v.ByteValue = [2]
     v.Int16Value = [3]
@@ -132,19 +129,8 @@ def test_custom_structs_array():
     v.ByteStringValue = [b"fifteen", b"sixteen"]
     v.XmlElementValue = [ua.XmlElement("<toto>titi</toto>")]
     v.NodeIdValue = [ua.NodeId.from_string("ns=4;i=9999"), ua.NodeId.from_string("i=6")]
-    # self.ExpandedNodeIdValue =
-    # self.QualifiedNameValue =
-    # self.LocalizedTextValue =
-    # self.StatusCodeValue =
-    # self.VariantValue =
-    # self.EnumerationValue =
-    # self.StructureValue =
-    # self.Number =
-    # self.Integer =
-    # self.UInteger =
-
     data = struct_to_binary(v)
-    v2 = struct_from_binary(s.ArrayValueDataType, ua.utils.Buffer(data))
+    v2 = struct_from_binary(ns["ArrayValueDataType"], ua.utils.Buffer(data))
     assert v.NodeIdValue == v2.NodeIdValue
     # print(v2.NodeIdValue)
 
@@ -226,8 +212,7 @@ def test_string_to_variant_qname():
 
 
 def test_string_to_variant_localized_text():
-    string = "_This is my string"
-    # string = "_This is my nøåæ"FIXME: does not work with python2 ?!?!
+    string = "_This is my nøåæ"
     obj = ua.LocalizedText(string)
     assert obj == string_to_val(string, ua.VariantType.LocalizedText)
     assert string == val_to_string(obj)
@@ -420,7 +405,6 @@ def test_datetime():
     epch = ua.datetime_to_win_epoch(now)
     dt = ua.win_epoch_to_datetime(epch)
     assert now == dt
-
     # python's datetime has a range from Jan 1, 0001 to the end of year 9999
     # windows' filetime has a range from Jan 1, 1601 to approx. year 30828
     # let's test an overlapping range [Jan 1, 1601 - Dec 31, 9999]
@@ -428,12 +412,10 @@ def test_datetime():
     assert ua.win_epoch_to_datetime(ua.datetime_to_win_epoch(dt)) == dt
     dt = datetime(9999, 12, 31, 23, 59, 59)
     assert ua.win_epoch_to_datetime(ua.datetime_to_win_epoch(dt)) == dt
-
     epch = 128930364000001000
     dt = ua.win_epoch_to_datetime(epch)
     epch2 = ua.datetime_to_win_epoch(dt)
     assert epch == epch2
-
     epch = 0
     assert ua.datetime_to_win_epoch(ua.win_epoch_to_datetime(epch)) == epch
 
@@ -613,44 +595,39 @@ def test_null():
 
 def test_where_clause():
     cf = ua.ContentFilter()
-
     el = ua.ContentFilterElement()
-
     op = ua.SimpleAttributeOperand()
     op.BrowsePath.append(ua.QualifiedName("property", 2))
     el.FilterOperands.append(op)
-
     for i in range(10):
         op = ua.LiteralOperand()
         op.Value = ua.Variant(i)
         el.FilterOperands.append(op)
-
     el.FilterOperator = ua.FilterOperator.InList
     cf.Elements.append(el)
-
     wce = WhereClauseEvaluator(logging.getLogger(__name__), None, cf)
-
     ev = BaseEvent()
     ev._freeze = False
     ev.property = 3
-
     assert wce.eval(ev)
-
 
 
 class MyEnum(_MaskEnum):
     member1 = 0
     member2 = 1
 
+
 def test_invalid_input():
     with pytest.raises(ValueError):
         MyEnum(12345)
+
 
 def test_parsing():
     assert MyEnum.parse_bitfield(0b0) == set()
     assert MyEnum.parse_bitfield(0b1) == {MyEnum.member1}
     assert MyEnum.parse_bitfield(0b10) == {MyEnum.member2}
     assert MyEnum.parse_bitfield(0b11) == {MyEnum.member1, MyEnum.member2}
+
 
 def test_identity():
     bitfields = [0b00, 0b01, 0b10, 0b11]
@@ -659,6 +636,7 @@ def test_identity():
         as_set = MyEnum.parse_bitfield(bitfield)
         back_to_bitfield = MyEnum.to_bitfield(as_set)
         assert back_to_bitfield == bitfield
+
 
 def test_variant_intenum():
     ase = ua.AxisScaleEnumeration(ua.AxisScaleEnumeration.Linear)  # Just pick an existing IntEnum class

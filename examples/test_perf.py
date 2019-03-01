@@ -1,12 +1,9 @@
 import sys
 sys.path.insert(0, "..")
-import time
 
-
-from opcua import ua, Server
+from asyncua import Server
 
 import cProfile
-import re
 
 
 def mymain():
